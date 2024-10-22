@@ -1,0 +1,138 @@
+# PIPELINE DEFINITION
+# Name: qarik-mlops-demo
+# Inputs:
+#    bq_table: str
+#    data_path: str
+#    model_directory: str
+#    project_id: str
+#    region: str
+components:
+  comp-create-dataset:
+    executorLabel: exec-create-dataset
+    inputDefinitions:
+      parameters:
+        bq_table:
+          parameterType: STRING
+        data_path:
+          parameterType: STRING
+        project_id:
+          parameterType: STRING
+  comp-deploy-model:
+    executorLabel: exec-deploy-model
+    inputDefinitions:
+      parameters:
+        model_directory:
+          parameterType: STRING
+        project_id:
+          parameterType: STRING
+        region:
+          parameterType: STRING
+  comp-train-model:
+    executorLabel: exec-train-model
+    inputDefinitions:
+      parameters:
+        data_path:
+          parameterType: STRING
+        model_directory:
+          parameterType: STRING
+deploymentSpec:
+  executors:
+    exec-create-dataset:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - create_dataset
+        command:
+        - python3
+        - /pipelines/component/src/create_dataset.py
+        image: us-central1-docker.pkg.dev/sandbox-qarik/calhousing-artifact-registry/calhousing/components/component_base:latest
+    exec-deploy-model:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - deploy_model
+        command:
+        - python3
+        - /pipelines/component/src/deploy_model.py
+        image: us-central1-docker.pkg.dev/sandbox-qarik/calhousing-artifact-registry/calhousing/components/component_base:latest
+    exec-train-model:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - train_model
+        command:
+        - python3
+        - /pipelines/component/src/train_model.py
+        image: us-central1-docker.pkg.dev/sandbox-qarik/calhousing-artifact-registry/calhousing/components/component_base:latest
+pipelineInfo:
+  name: qarik-mlops-demo
+root:
+  dag:
+    tasks:
+      create-dataset:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-dataset
+        inputs:
+          parameters:
+            bq_table:
+              componentInputParameter: bq_table
+            data_path:
+              componentInputParameter: data_path
+            project_id:
+              componentInputParameter: project_id
+        taskInfo:
+          name: create-dataset
+      deploy-model:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-deploy-model
+        dependentTasks:
+        - train-model
+        inputs:
+          parameters:
+            model_directory:
+              componentInputParameter: model_directory
+            project_id:
+              componentInputParameter: project_id
+            region:
+              componentInputParameter: region
+        taskInfo:
+          name: deploy-model
+      train-model:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-train-model
+        dependentTasks:
+        - create-dataset
+        inputs:
+          parameters:
+            data_path:
+              componentInputParameter: data_path
+            model_directory:
+              componentInputParameter: model_directory
+        taskInfo:
+          name: train-model
+  inputDefinitions:
+    parameters:
+      bq_table:
+        parameterType: STRING
+      data_path:
+        parameterType: STRING
+      model_directory:
+        parameterType: STRING
+      project_id:
+        parameterType: STRING
+      region:
+        parameterType: STRING
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.9.0

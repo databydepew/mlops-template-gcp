@@ -1,0 +1,8 @@
+{
+    "bq_table": "sandbox-qarik.housing.housing_table",
+    "model_directory": "gs://sandbox-qarik-calhousing-bucket/trained_models/2024-10-22 12:40:21.847641",
+    "data_path": "gs://sandbox-qarik-calhousing-bucket/data",
+    "project_id": "sandbox-qarik",
+    "region": "us-central1",
+    "gs_pipeline_spec_path": "gs://sandbox-qarik-calhousing-bucket/pipeline_root/calhousing/pipeline_job.yaml"
+}
